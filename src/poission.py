@@ -81,7 +81,39 @@ class Poisson:
 
         return self.err
     
+    def error_triangle_calculation(self, u_true):
+
+        self.triangle_error = np.zeros(len( self.mesh.triangulation.simplices))
+
+        for index,p in enumerate(self.mesh.triangulation.simplices):
+            p1,p2,p3 = self.mesh.triangulation.points[p]
+            for i in range(len(self.quadrature.quad_points)):
+                csi =   self.quadrature.quad_points[i][0]
+                eta =   self.quadrature.quad_points[i][1]
+                w   =   self.quadrature.weights[i]          
+                det = self.base.determinant_jacobian_matrix(csi,eta,p1,p2,p3)
+                x,y =  self.base.get_xy(csi,eta,p1,p2,p3)
+                u_num = self.precomputed_base[i] @ self.u[p].T
+                self.triangle_error[index]+= w*(u_num - u_true(x,y))**2 *det
+
+ 
+        return self.triangle_error
     
+    def mesh_refinement(self,threshold):
+        points_to_add = []
+        triangles_to_refine = self.mesh.triangulation.simplices[self.triangle_error >= threshold]
+        for p in triangles_to_refine:
+            p1,p2,p3 = self.mesh.triangulation.points[p]
+            points_to_add.append((p1+p2)*0.5)
+            points_to_add.append((p1+p3)*0.5)
+            points_to_add.append((p2+p3)*0.5)
+        points_to_add = np.unique(np.array(points_to_add).reshape(-1,2),axis=0)
+        self.mesh.add_point(points_to_add)
+        self.DOF =  len(self.mesh.points)
+        self.A   = dok_array((self.DOF,self.DOF),dtype=np.float)
+        self.b   = np.zeros(self.DOF, dtype=np.float)
+        self.u   = np.zeros(self.DOF,dtype=np.float)
+        return None 
     
     
 

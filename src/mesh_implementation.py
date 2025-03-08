@@ -30,5 +30,5 @@ class Mesh:
     def add_point(self,new_point):
         self.triangulation.add_points(new_point)
         self.boundary = np.unique(self.triangulation.convex_hull.flatten())
-
+        self.points = self.triangulation.points
         return None
