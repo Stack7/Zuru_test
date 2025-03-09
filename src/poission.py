@@ -3,7 +3,10 @@ from scipy.sparse import dok_array,linalg
 
 
 class Poisson:
+    '''This class solves the Poisson equantion using FEM '''
+    
     def __init__(self, mesh,base, quadrature,ffunction,bc):
+       '''This class takes as entries an instance of the mesh, base function and quadrature points'''
        self.mesh = mesh 
        self.base = base
        self.quadrature = quadrature
@@ -19,6 +22,7 @@ class Poisson:
        self.u   = np.zeros(self.DOF,dtype=np.float)
 
     def local_system_calculation(self,p1,p2,p3):
+        '''This method builds the local system for each mesh triangle'''
         local_A = np.zeros((3,3),dtype=np.float)
         local_b = np.zeros(3, dtype=np.float)
         for i in range(len(self.quadrature.quad_points)):
@@ -37,7 +41,7 @@ class Poisson:
         return local_A, local_b
     
     def building_global_matrix(self):
-
+        '''This function builds the global system assembling it from each local ones'''
         for p in self.mesh.triangulation.simplices:
            p1,p2,p3 = self.mesh.triangulation.points[p]
            local_a, local_b = self.local_system_calculation(p1,p2,p3)
@@ -54,6 +58,7 @@ class Poisson:
 
 
     def assign_bc(self):
+        ''' This methos assigns to the system the boundary conditions'''
         for p in self.mesh.boundary:
             self.A[p,:] = 0
             self.A[p,p] = 1
@@ -61,12 +66,13 @@ class Poisson:
         return None
     
     def solve(self):
+        '''This method solves the system'''
         self.u,self.info = linalg.cgs(self.A.tocsc(),self.b)
 
         return None
     
     def calculate_error(self,u_true):
-
+        '''This method calculates the error over all mesh'''
         self.err = 0
         for p in self.mesh.triangulation.simplices:
             p1,p2,p3 = self.mesh.triangulation.points[p]
@@ -82,7 +88,7 @@ class Poisson:
         return self.err
     
     def error_triangle_calculation(self, u_true):
-
+        '''This method calculates the errorfor each mesh triangle'''
         self.triangle_error = np.zeros(len( self.mesh.triangulation.simplices))
 
         for index,p in enumerate(self.mesh.triangulation.simplices):
@@ -100,6 +106,7 @@ class Poisson:
         return self.triangle_error
     
     def mesh_refinement(self,threshold):
+        '''This method adds the mid points of the triangle sides if the error on the triangle is greater than threshold'''
         points_to_add = []
         triangles_to_refine = self.mesh.triangulation.simplices[self.triangle_error >= threshold]
         for p in triangles_to_refine:

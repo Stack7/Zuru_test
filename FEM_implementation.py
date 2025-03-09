@@ -6,7 +6,7 @@ from src.base_function import Base_function
 from src.calcolate_quadrature import Quadrature_Rules
 from src.poission import Poisson
 
-#Geometrical  paramters
+# Geometrical parameters
 xstart = 0
 ystart = 0
 yend = 2
@@ -15,11 +15,11 @@ xnum_points = 20
 ynum_points = 16
 bc = 0
 err = 0
-# chosen right-hand side function
+# Chosen right-hand side function
 def f(x,y):
     return 5*np.pi**2 * np.sin(2*np.pi*x) *np.sin(np.pi*y)
 
-#analitical solution
+# Analitical solution
 u = lambda x,y: np.sin(2*np.pi*x)*np.sin(np.pi*y)
 
 #################################################################################################
@@ -27,14 +27,16 @@ u = lambda x,y: np.sin(2*np.pi*x)*np.sin(np.pi*y)
 mesh = Mesh(xstart,xend,ystart,yend,xnum_points,ynum_points)
 mesh.view_Mesh()
 
-# Definition of tha bse function and quadrature points
+# Definition of tha base function and quadrature points
 base_f = Base_function()
 quadrature = Quadrature_Rules()
-# Definition Poisson equation on the defined mesh with given basis and quadrature points
-#Assembling the discrete formulation and solving the sparse linear system
+
+# Definition Poisson equation on the mesh with given basis and quadrature points
+# Assembling the discrete formulation and solving the sparse linear system
 poisson_system = Poisson(mesh,base_f, quadrature,f,bc)
 poisson_system.build_system()
 poisson_system.solve()
+
 # Plotting a comparison between analitical solution and true solution
 u_true = np.sin(2*np.pi*poisson_system.mesh.triangulation.points[:,0])*np.sin(np.pi*poisson_system.mesh.triangulation.points[:,1])
 
@@ -44,4 +46,6 @@ fig, (ax1, ax2) = plt.subplots(
 ax1.plot_trisurf(poisson_system.mesh.points[:,0],poisson_system.mesh.points[:,1],poisson_system.u)
 
 ax2.plot_trisurf(poisson_system.mesh.points[:,0],poisson_system.mesh.points[:,1],u_true)
+ax1.set_title('Numerical solution')
+ax2.set_title('Analitical solution')
 plt.show()
